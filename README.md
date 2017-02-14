@@ -19,7 +19,7 @@ Con la ayuda de Qt vamos a crear nuestro propio monitor del sistema. Nos permiti
 
 La ventana principal puede ser algo así:
 
-[!][Ventana principal](/../master/images/main-window.png)
+![Ventana principal](/../master/images/main-window.png)
 
 Es decir, puedes colocar un QTabWidget que ocupe toda la ventana, con una pestaña por tipo de información que quieras mostrar: Procesos, Red, Hardware, Sensores, etc.
 
@@ -113,4 +113,4 @@ Ese resultado es la información del hardware que deberá ser mostrada en la pes
 
 ## Opcional
 
- * ¿De verdad tienes tiempo para más? Si es así añadie otra información que te interese. Por ejemplo el modelo de la CPU —disponible en `/proc/cpuinfo`— o de la red —ejecutando `netstat` y/o `ifconfig`—.
+ * ¿De verdad tienes tiempo para más? ;) Si es así añadie otra información que te interese. Por ejemplo el modelo de la CPU —disponible en `/proc/cpuinfo`— o de la red —ejecutando `netstat` y/o `ifconfig`— como el número de conexiones abiertas o la dirección IP de tu equipo.
