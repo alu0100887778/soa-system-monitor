@@ -131,6 +131,41 @@ De forma similar, el método `write()` de `QIODevice` —o `QProcess`— inicia 
 
 Por el momento usaremos estas funciones para la E/S, en lugar de eventos. El problema es que como, como hemos dicho, estas funciones pueden bloquear los hilos donde se ejecutan, por lo que no podemos usarlas nunca en el hilo principal del programa.
 
+## Monitor de sistemas remotos
+
+Si quieres programar en Windows puedes hacer un monitor remoto para sistemas Linux. Y, obviamente, si trabajas en Linux y quieres más, puedes hacer que tu programa también pueda monitorizar otras máquinas en Linux ;)
+
+La clave es tener un cliente ssh. En Linux ese cliente viene de serie y permite ejecutar un comando como `lshw` en remoto así:
+
+    $ ssh usuario@miservidor.org 'lshw -json'
+
+obviamente podríamos leer el contenido de un archivo así:
+
+    $ ssh usuario@miservidor.org 'cat /etc/passwd'
+
+y el de un directorio así:
+
+    $ ssh usuario@miservidor.org 'ls /etc'
+    
+o hacer cosas así:
+
+    $ ssh usuario@miservidor.org 'ls /etc/p*'
+
+En Linux necesitmos instalar un cliente como [Putty](http://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html). Como toda buena aplicación de Windows, Putty tiene ventanas. Pero viene con un cliente de línea de comandos llamando `plink`:
+
+    > plink usuario@miservidor.org "lshw -json"
+
+Obviamente estos comandos se pueden lanzar con `QProcess` y leer su salida para hacer la actividad que hemos comentado. Simplemente necesitamos un servidor SSH, que puede ser uno cualquiera al que tengamos acceso o cualquier distribución de Linux ejecutándose en una máquina virtual en nuestro ordenador.
+
+El único problema es que tanto `ssh` como `plink` van a pedir la contraseña del usuario para conectarse al servidor. Con `plink` podemos usar la opción `-pw` para indicarla:
+
+    > plink usuario@miservidor.org -pw "password" "lshw -json"
+    
+pero eso no funciona con `ssh` ni es la opción recomendada por sus riesgos para la seguridad. Lo más seguro es usar la autenticación basada en clave privada:
+
+ * [Using Plink to do Key Based Authentication from Windows](http://practical-admin.com/blog/glutton-for-punishment-using-plink-to-do-key-based-authentication/)
+ * [Autentificación SSH con llave privada (private key)](https://www.linuxtotal.com.mx/index.php?cont=info_seyre_010)
+
 ## Opcional
 
  * ¿De verdad tienes ganas de más? ;) Si es así añade otra información que te interese. Por ejemplo:
