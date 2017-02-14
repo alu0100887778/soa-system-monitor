@@ -2,7 +2,7 @@
 
 Con la ayuda de Qt vamos a crear nuestro propio monitor del sistema. Nos permitirá examinar: procesos en ejecución, conexiones abiertas, temperatura de la CPU, hardware del sistema y todo lo que se nos ocurra.
 
-Lo haremos para Linux porque en Windows es bastante más complejo. Por ejemplo, en Linux leer la temperatura de la CPU significa abrir y leer el contenido de una archivo en /sys/class/hwmon. Sin embargo en Windows hay que acceder a las interfaces [COM](https://en.wikipedia.org/wiki/Component_Object_Model) de [Windows Management Instrumentation](https://en.wikipedia.org/wiki/Windows_Management_Instrumentation). Para ilustrarlo se pude ver un ejemplo [aquí](https://goo.gl/4GxxoB)
+Lo haremos para Linux porque en Windows es bastante más complejo. Por ejemplo, en Linux leer la temperatura de la CPU significa abrir y leer el contenido de una archivo en /sys/class/hwmon. Sin embargo en Windows hay que acceder a las interfaces [COM](https://en.wikipedia.org/wiki/Component_Object_Model) de [Windows Management Instrumentation](https://en.wikipedia.org/wiki/Windows_Management_Instrumentation). Para ilustrarlo se pude ver un ejemplo [aquí](https://goo.gl/4GxxoB).
 
 En todo caso, si quieres hacer la actividad en Windows, se te propone una opción alternativa al final del documento.
 
@@ -33,11 +33,11 @@ Dentro de cada pestaña se colocan los controles que hagan falta para mostrar la
 
 Una de las pestañas de nuestro programa mostrará la información de los sensores instalados en el hardware detectado por el sistema operativo. Esta información está disponible en forma de archivos dentro de la ruta `/sys`. Ese es el lugar donde Linux monta [Sysfs](https://es.wikipedia.org/wiki/Sysfs), un sistema de archivos virtual —no son archivos reales que ocupen espacio en el disco duro— que usa Linux para publicar todo tipo de información sobre los dispositivos y los controladores conocidos.
 
-En concreto, dentro de `/sys/class/hwmon/` hay un directorio para cada chip detectado con sensores. Y dentro de ellos hay archivos como `temp1_input`, `temp1_max` o `fan1_input` que contienen información sobre la temperatura o la velocidad de los ventiladores del dispositivo en cuestión. El archivo `name` contiene el nombre al dispositivo.
+En concreto, dentro de `/sys/class/hwmon/` hay un directorio para cada chip detectado con sensores. Y dentro de ellos hay archivos como `temp1_input`, `temp1_max` o `fan1_input` que contienen información sobre la temperatura o la velocidad de los ventiladores del dispositivo en cuestión. El archivo `name` contiene el nombre del dispositivo.
 
 Crearemos un hilo que cada segundo —véase el método `sleep()` de `QThread` para implementar la espera—:
 
- 1. Recorra lo directorios de `/sys/class/hwmon/` y los archivos con datos de sensores: `temp*`, `fan*`, etc.   
+ 1. Recorra los directorios de `/sys/class/hwmon/` y los archivos con datos de sensores: `temp*`, `fan*`, etc.   
  2. Lea los datos de cada sensor y los almacene en una cola para enviarlos al hilo principal. Por ejemplo, `QVector`, `QQueue` o lo que prefieras. Cada valor se debe guardar con una etiqueta única para saber de qué sensor estamos hablando.
 
 Obviamente es importante evitar las condiciones de carrera. Debemos usar`QMutex` para proteger la cola y `QMutexLock` para bloquear el mutex y asegurar que se libera cuando ya no es necesario. Además el hilo principal solo debe extraer datos cuando haya algo que extraer pero ¿nos servirá `QWaitCondition` para eso?
@@ -63,7 +63,7 @@ En esta ocasión el hilo principal creará un agrupamiento de hilos [QThreadPool
  * Cada tarea se asigna al agrupamiento usando [QtConcurrent](http://doc.qt.io/qt-5/qtconcurrent-index.html).
  * Las funciones de [QtConcurrent](http://doc.qt.io/qt-5/qtconcurrent-index.html) devuelven un [QFuture](http://doc.qt.io/qt-5/qfuture.html) que cuando termine la tarea contendrá el resultado de esta.
  * Con [QFutureWatcher](http://doc.qt.io/qt-5/qfuturewatcher.html) se puede vigilar la evolución de una tarea. Por ejemplo tiene una señal `finished()` que emite cuando la tarea termina y el resultado ya está disponible en el `QFuture`.
- * Con [QFutureSynchronizer](http://doc.qt.io/qt-5/qfuturesynchronizer.html) se pueden sincronizar várias tareas.
+ * Con [QFutureSynchronizer](http://doc.qt.io/qt-5/qfuturesynchronizer.html) se pueden sincronizar varias tareas.
 
 entonces: 
  
@@ -93,7 +93,7 @@ Con esa informaación la ventana principal actualizará la pestaña correspondie
 
  * Usar [QTreeView](http://doc.qt.io/qt-5/QTreeView.html#details) parece la forma más sencilla de mostrar el árbol de dispositivos. Pero para eso es necesario interpretar correctamente la salida del comando `lshw`.
 
- * Para poder interpretar la salida de `lshw` sería interesante que dicha salida estuviera en algún formato para el que Qt nos diera facilidades. Lo mejor es pasarle a `lshw` la opción `-json` y así toda la información la devolverá en formato [JSON](https://en.wikipedia.org/wiki/JSON). JSON se ha extendio mucho en el mundo de la web por su relación con Javascript y Qt dispone de [un módulo](http://doc.qt.io/qt-5/json.html) para interpretarlo. Con el módulo JSON será muy fácil recorrer el árbol de dispositivos y construir los elementos del `QTreeView`.
+ * Para poder interpretar la salida de `lshw` sería interesante que dicha salida estuviera en algún formato para el que Qt nos diera facilidades. Lo mejor es pasarle a `lshw` la opción `-json` y así toda la información la devolverá en formato [JSON](https://en.wikipedia.org/wiki/JSON). JSON se ha extendido mucho en el mundo de la web por su relación con Javascript y Qt dispone de [un módulo](http://doc.qt.io/qt-5/json.html) para interpretarlo. Con el módulo JSON será muy fácil recorrer el árbol de dispositivos y construir los elementos del `QTreeView`.
 
 #### Ejecución de otros procesos
 
@@ -107,7 +107,7 @@ El método `start()` de `QProcess` ejecuta el proceso que le indiquemos y conect
 
 Si llamamos directamente al sistema operativo, operaciones como `read()`, `write()` son bloqueantes o síncronas. Es decir, si no se pueden hacer en el momento el hilo se suspenden hasta que se completan.
 
-Con Qt eso no funciona bien pues el resultado es que el bucle de mensajes se detiene y no puede procesar más peticiones. Por eso en Qt las operaciones de E/S salida de `QIODevice` y clases herederas son asíncronas. Es decir, se programan las operaciones y vuelven inmediatamente. Cuando la operación se ejecuta con éxito, llega un evento al bucle de mensajes que se emite como una señal y se entrega al slot correspondiente. Pero todo eso lo veremos más adelante. Por el momento usaremos `QIODevice` como si las operaciones fueran síncronas, sin programación dirigida a eventos.
+Con Qt eso no funciona bien pues el resultado es que el bucle de mensajes se detiene y no puede procesar más peticiones. Por eso en Qt las operaciones de E/S de `QIODevice` y clases herederas son asíncronas. Es decir, se programan las operaciones y vuelven inmediatamente. Cuando la operación se ejecuta con éxito, llega un evento al bucle de mensajes que se emite como una señal y se entrega al slot correspondiente. Pero todo eso lo veremos más adelante. Por el momento usaremos `QIODevice` como si las operaciones fueran síncronas, sin programación dirigida a eventos.
 
 Por tanto para leer de `QProcess` haremos así:
 
@@ -127,9 +127,9 @@ siempre desde un hilo.
 
 Ambas operaciones juntas se comportan como la llamada al sistema `read()` de Linux. `waitForReadyRead()` hace que el hilo se supenda hasta que hay datos para leer. Despues podemos leerlos con `read()`, `readAll()` o `readLine()`. 
 
-De forma similar, el método `write()` de `QIODevice` —o `QProcess`— inicia la operación de escritura pero `waitForBytesWritten()` bloquea el hilo hasta que los datos se escribe. Además existen otros métodos `waitFor*` para bloquear el hilo hasta que ocurren ciertas cosas. Por ejemplo: `waitForFinished()` o `waitForStarted()`.
+De forma similar, el método `write()` de `QIODevice` —o `QProcess`— inicia la operación de escritura pero `waitForBytesWritten()` bloquea el hilo hasta que los datos se escriben. Además existen otros métodos `waitFor*` para bloquear el hilo hasta que ocurren ciertas cosas. Por ejemplo: `waitForFinished()` o `waitForStarted()`.
 
-Por el momento usaremos estas funciones para la E/S, en lugar de eventos. El problema es que como, como hemos dicho, estas funciones pueden bloquear los hilos donde se ejecutan, por lo que no podemos usarlas nunca en el hilo principal del programa.
+Por el momento usaremos estas funciones para la E/S, en lugar de eventos. El problema es que, como hemos dicho, estas funciones pueden bloquear los hilos donde se ejecutan, por lo que no podemos usarlas nunca en el hilo principal del programa.
 
 ## Monitor de sistemas remotos
 
@@ -151,7 +151,7 @@ o hacer cosas así:
 
     $ ssh usuario@miservidor.org 'ls /etc/p*'
 
-En Linux necesitmos instalar un cliente como [Putty](http://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html). Como toda buena aplicación de Windows, Putty tiene ventanas. Pero viene con un cliente de línea de comandos llamando `plink`:
+En Linux necesitamos instalar un cliente como [Putty](http://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html). Como toda buena aplicación de Windows, Putty tiene ventanas. Pero viene con un cliente de línea de comandos llamando `plink`:
 
     > plink usuario@miservidor.org "lshw -json"
 
