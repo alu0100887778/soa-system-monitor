@@ -2,6 +2,10 @@
 
 Con la ayuda de Qt vamos a crear nuestro propio monitor del sistema. Nos permitirá examinar: procesos en ejecución, conexiones abiertas, temperatura de la CPU, hardware del sistema y todo lo que se nos ocurra.
 
+Lo haremos para Linux porque en Windows es bastante más complejo. Por ejemplo, en Linux leer la temperatura de la CPU significa abrir y leer el contenido de una archivo en /sys/class/hwmon. Sin embargo en Windows hay que acceder a las interfaces [COM](https://en.wikipedia.org/wiki/Component_Object_Model) de [Windows Management Instrumentation](https://en.wikipedia.org/wiki/Windows_Management_Instrumentation). Para ilustrarlo se pude ver un ejemplo [aquí](https://goo.gl/4GxxoB)
+
+En todo caso, si quieres hacer la actividad en Windows, se te propone una opción alternativa al final del documento.
+
 ## Cómo empezar
 
  1. Acepta la [tarea asignada de GitHub Classroom](https://classroom.github.com/assignment-invitations/db3c0db7dc53b0bce07d4d2cf3826f97). Así obtendrás tu propio repositorio como una copia de este. A este repositorio lo llamaremos `upstream`.
@@ -33,19 +37,22 @@ En concreto, dentro de `/sys/class/hwmon/` hay un directorio para cada chip dete
 
 Crearemos un hilo que cada segundo —véase el método `sleep()` de `QThread` para implementar la espera—:
 
- 1. Recorra lo directorios de `/sys/class/hwmon/` y los archivos con datos de sensores: `temp*`, `fan*`, etc.
-    * [QDir](http://doc.qt.io/qt-5/qdir.html) será de gran ayuda para eso.
-    * En [la documentación del kernel](https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface) se indica qué podemos encontrar en /sys/class/hwmon.
- 2. Lea los datos de cada sensor y los almacene en una cola para enviarlos al hilo principal:
-    1. Esta cola puede ser `QVector`, `QQueue` o cualquier otra estructura que consideres apropiada.
-    2. Cada valor se debe guardar con una etiqueta unica. Esta etiqueta se puede construir, por ejemplo, con el nombre del chip —disponible en el archivo _name_— más el nombre del sensor: _coretemp:temp2\_max_ o _acpitz-temp1\_input_. Se puede usar una estructura propia con el valor y la etiquera o aprovechar las facilidades de [QPair](http://doc.qt.io/qt-5/qpair.html).
- 3. Use `QMutex` para proteger la cola, `QMutexLock` para bloquear el mutex y segurar que se libera cuando ya no es necesario y...
-    * ¿`QWaitCondition` para que el hilo principal sea notificado cuando hay datos en la cola y los extraiga? ¿o no sirve?
-    * Usar la solución más adecuada para ese problema.
+ 1. Recorra lo directorios de `/sys/class/hwmon/` y los archivos con datos de sensores: `temp*`, `fan*`, etc.   
+ 2. Lea los datos de cada sensor y los almacene en una cola para enviarlos al hilo principal. Por ejemplo, `QVector`, `QQueue` o lo que prefieras. Cada valor se debe guardar con una etiqueta única para saber de qué sensor estamos hablando.
 
-El hilo principal debe extraer los datos de los sensores cada vez que hay datos nuevos y actualizarlos en la pestaña correspondiente.
+Obviamente es importante evitar las condiciones de carrera. Debemos usar`QMutex` para proteger la cola y `QMutexLock` para bloquear el mutex y asegurar que se libera cuando ya no es necesario. Además el hilo principal solo debe extraer datos cuando haya algo que extraer pero ¿nos servirá `QWaitCondition` para eso?
 
-Para crear el hilo usaremos [QThread](http://doc.qt.io/qt-5/qthread.html). Solo tenemos que crear una clase y heredar de `QThread` para sobreescribir su método `run()` donde pondremos el código que ejecutará nuestro hilo. En el apartado ["Gestión de hilos en Qt" de este artículo](https://jmtorres.webs.ull.es/me/2013/02/introduccion-al-uso-de-hilos-en-qt/) se ve un pequeño ejemplo.
+El hilo principal extraerá los datos de los sensores cada vez que hayan datos nuevos y los actualizará en la pestaña correspondiente.
+
+Para crear el hilo usaremos [QThread](http://doc.qt.io/qt-5/qthread.html). Solo tenemos que crear una clase y heredar de `QThread` para sobreescribir su método `run()` donde pondremos el código que se ejecutará en el hilo. Es decir, allí pondremos el código que lee los sensores.
+
+### Notas
+
+ * Si se trabaja localmente en Linux, [QDir](http://doc.qt.io/qt-5/qdir.html) será de gran ayuda para recorrer los directorios.
+ * En [la documentación del kernel](https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface) se indica qué podemos esperar encontrarnos en /sys/class/hwmon.
+ * La etiqueta se puede construir, por ejemplo, con el nombre del chip —disponible en el archivo _name_— más el nombre del sensor. Por ejemplo: _coretemp:temp2\_max_ o _acpitz-temp1\_input_.
+ * Para almacenar en la cola tanto la etiqueta como el valor se puede usar una estructura propia o aprovechar las facilidades de [QPair](http://doc.qt.io/qt-5/qpair.html).
+ En el apartado ["Gestión de hilos en Qt" de este artículo](https://jmtorres.webs.ull.es/me/2013/02/introduccion-al-uso-de-hilos-en-qt/) se puede ver un pequeño ejemplo de cómo usar `QThread`.  
 
 ## Lista de procesos
 
@@ -55,27 +62,48 @@ En esta ocasión el hilo principal creará un agrupamiento de hilos [QThreadPool
 
  * Cada tarea se asigna al agrupamiento usando [QtConcurrent](http://doc.qt.io/qt-5/qtconcurrent-index.html).
  * Las funciones de [QtConcurrent](http://doc.qt.io/qt-5/qtconcurrent-index.html) devuelven un [QFuture](http://doc.qt.io/qt-5/qfuture.html) que cuando termine la tarea contendrá el resultado de esta.
- * Con [QFutureWatcher](http://doc.qt.io/qt-5/qfuturewatcher.html) se puede vigilar la evolución de una tarea. Por ejemplo tiene una señal `finished()` que emite cuando la tarea termina y el resultado ya está
- disponible en el `QFuture`.
- * Con [QFutureSynchronizer](http://doc.qt.io/qt-5/qfuturesynchronizer.html) se puede esperar a que várias tareas terminen.
+ * Con [QFutureWatcher](http://doc.qt.io/qt-5/qfuturewatcher.html) se puede vigilar la evolución de una tarea. Por ejemplo tiene una señal `finished()` que emite cuando la tarea termina y el resultado ya está disponible en el `QFuture`.
+ * Con [QFutureSynchronizer](http://doc.qt.io/qt-5/qfuturesynchronizer.html) se pueden sincronizar várias tareas.
 
 entonces: 
  
- 1. Cada 2 segundos se buscan todos los directorios de procesos en /proc con la ayuda de `QDir`.
+ 1. Cada 5 segundos se buscan todos los directorios de procesos en /proc.
  2. Al terminar, se lanza una tarea en el agrupamiento de hilos por cada directorio encontrado. Cada tarea será la encargada de recopilar la infomación sobre el proceso: PID, línea de comandos _(cmdline)_, propietario _(status)_, número de hilos, etc.
- 3. Al terminar se actualiza la lista de procesos mostrada en la pestaña correspondiente. Podría ser buena idea usar [QTableWidget](http://doc.qt.io/qt-4.8/qtablewidget.html) para tener una tabla.
+ 3. Al terminar se actualiza la lista de procesos mostrada en la pestaña correspondiente.
+ 
+### Notas
+ 
+ * Podría ser buena idea usar [QTableWidget](http://doc.qt.io/qt-5/qtablewidget.html) para tener una tabla.
 
-## Ejecución de otros procesos
+## Hardware
 
-Mucha de la información que queremos la podemos extraer ejecutando programas ya instalados en el sistema.
+Vamos a utilizar `QProcess` para invocar al programa `lshw`. Este programa nos proporciona un listado completo del hardware instalado en nuestro sistema:
 
-Ya sabemos que en Linux eso significa tirar de las llamadas al sistema `fork()` y `exec()`, mientras que en Windows se utiliza CreateProcess(). Por suerte Qt nos ofrece [QProcess](http://doc.qt.io/qt-5/qprocess.html) y así no tenemos que preocuparnos por las singularidades de cada plataforma.
+Vamos a ejecutar `lshw` con `QProcess` y leer sus resultados de forma síncrona —véase más abajo—. Por lo tanto no podemos leer su salida estándar desde el hilo principal porque lo bloquearíamos. En su lugar usaremos hilos pero en una de las formas recomendadas por Qt: [Hilos de trabajo usando señales y slots en Qt](https://jmtorres.webs.ull.es/me/2013/02/hilos-de-trabajo-usando-senales-y-slots-en-qt/):
+
+   1. En esta ocasión crearemos un `QThread` sin heredar del él.
+   2. Crearemos una clase que tendrá un slot que hará el trabajo de crear el `QProcess` lanzar `lshw` en él y leer su salida.
+   3. El objeto de dicha clase lo moveremos al nuevo hilo usando el método moveToThread() y conectaremos las señales y slots de dicho objeto con los de la ventana principal.
+   
+Tal y como se describe en [el artículo](https://jmtorres.webs.ull.es/me/2013/02/hilos-de-trabajo-usando-senales-y-slots-en-qt/) la ventana principal puede emitir una señal que llegará al nuevo objeto. El slot que lo reciba se ejecutará en el nuevo hilo. Es decir, que las operaciones síncronas sobre `QProcess` se ejecutarán en ese hilo. Al terminar el trabajo ese slot emitirá una señál con el resultado y este será recibido por la ventana principal en su propio slot.
+
+Con esa informaación la ventana principal actualizará la pestaña correspondiente.
+
+### Notas
+
+ * Usar [QTreeView](http://doc.qt.io/qt-5/QTreeView.html#details) parece la forma más sencilla de mostrar el árbol de dispositivos. Pero para eso es necesario interpretar correctamente la salida del comando `lshw`.
+
+ * Para poder interpretar la salida de `lshw` sería interesante que dicha salida estuviera en algún formato para el que Qt nos diera facilidades. Lo mejor es pasarle a `lshw` la opción `-json` y así toda la información la devolverá en formato [JSON](https://en.wikipedia.org/wiki/JSON). JSON se ha extendio mucho en el mundo de la web por su relación con Javascript y Qt dispone de [un módulo](http://doc.qt.io/qt-5/json.html) para interpretarlo. Con el módulo JSON será muy fácil recorrer el árbol de dispositivos y construir los elementos del `QTreeView`.
+
+#### Ejecución de otros procesos
+
+Ya hemos visto que parte de la información que queremos la podemos extraer ejecutando programas ya instalados en el sistema. Y sabemos que en Linux eso significa tirar de las llamadas al sistema `fork()` y `exec()`, mientras que en Windows se utiliza CreateProcess(). Por suerte Qt nos ofrece [QProcess](http://doc.qt.io/qt-5/qprocess.html) y así no tenemos que preocuparnos por las singularidades de cada plataforma.
 
 El método `start()` de `QProcess` ejecuta el proceso que le indiquemos y conecta su entrada y su salida estándar a tuberías —sin que tengamos que hacer nada—. Esas tuberías se usan indirectamente a través de los métodos de `QProcess` para comunicarnos con el proceso en ejecución. Para nosotros el objeto `QProcess` es como un archivo. Por eso hereda de [QIODevice](http://doc.qt.io/qt-5/qiodevice.html) que es la clase base de todas las clases que podemos usar como dispositivos de E/S. `QIODevice` implementa métodos como `read()`, `write()`, `readLine()`, `readAll`, `open()`, `isOpen()`, `close()`, `putChar()`, `getChar()`, `seek()` y más. El uso de cualquier clase heredera de QIODevice es siempre muy similar. Y, obviamente, donde la librería admita un objeto QIODevice, podemos indicar un objeto QProcess o de cualquier otra clase heredera de QIODevice.
 
 **Al leer o escribir en un objeto QProcess estaremos usando indirectamente tuberías para recibir o escribir en las salidas y entradas estándares del proceso en ejecución**.
 
-## Operaciones sincronas
+#### Operaciones sincronas
 
 Si llamamos directamente al sistema operativo, operaciones como `read()`, `write()` son bloqueantes o síncronas. Es decir, si no se pueden hacer en el momento el hilo se suspenden hasta que se completan.
 
@@ -95,23 +123,13 @@ process.write(data);
 process.waitForBytesWritten();
 ~~~
 
-`waitForReadyRead()` hace que el hilo se supenda hasta que hay datos para leer y despues podemos leerlos con `read()`, `readAll()` o `readLine()`. Ambas operaciones juntas se comportan como la llamada al sistema `read()`. De forma similar, el método `write()` de `QIODevice` —o `QProcess`— inicia la operación de escritura pero `waitForBytesWritten()` bloquea el hilo hasta que los datos se escribe. Además existen otros métodos `waitFor` para bloquear el hilo hasta que ocurren ciertas cosas: `waitForFinished()` o `waitForStarted()`.
+siempre desde un hilo.
 
-Por el momento usaremos estas funciones para la E/S, en lugar de eventos. El problema es que como estas funciones pueden bloquear los hilos donde se ejecutan, no podemos usarlas nunca en el hilo principal del programa.
+Ambas operaciones juntas se comportan como la llamada al sistema `read()` de Linux. `waitForReadyRead()` hace que el hilo se supenda hasta que hay datos para leer. Despues podemos leerlos con `read()`, `readAll()` o `readLine()`. 
 
-## Hardware
+De forma similar, el método `write()` de `QIODevice` —o `QProcess`— inicia la operación de escritura pero `waitForBytesWritten()` bloquea el hilo hasta que los datos se escribe. Además existen otros métodos `waitFor*` para bloquear el hilo hasta que ocurren ciertas cosas. Por ejemplo: `waitForFinished()` o `waitForStarted()`.
 
-Vamos a utilizar `QProcess` para invocar al programa `lshw`. Este programa nos proporciona un listado completo del hardware instalado en nuestro sistema:
-
- * Como `lshw` devuelve unos resultados que queremos manipular, sería interesante que lo hicieran en algún formato para el que Qt nos diera facilidades. La mejor opción es pasarle la opción `-json` y así toda la información la devolverá en formato [JSON](https://en.wikipedia.org/wiki/JSON). JSON se ha extendio mucho en el mundo de la web por su relación con Javascript y Qt dispone de [un módulo](http://doc.qt.io/qt-5/json.html) para interpretarlo.
- * Ya hemos dicho que vamos a ejecutar `lshw` con `QProcess` y leer sus resultados de forma síncrona. Por lo tanto no podemos leer su salida estándar en JSON desde el hilo principal. En su lugar usaremos hilos pero en una de las formas recomendadas por Qt: [Hilos de trabajo usando señales y slots en Qt](https://jmtorres.webs.ull.es/me/2013/02/hilos-de-trabajo-usando-senales-y-slots-en-qt/):
-   1. En esta ocasión crearemos un `QThread` sin heredar del él.
-   2. Crearemos una clase que hará el trabajo de crear el `QProcess` lanzar `lshw` en él y leer su salida.
-   3. El objeto de dicha clase lo moveremos al nuevo hilo usando el método moveToThread().
-   4. Tal y como se describe en [el artículo](https://jmtorres.webs.ull.es/me/2013/02/hilos-de-trabajo-usando-senales-y-slots-en-qt/) la ventana principal puede emitir una señal que llegará al nuevo objeto. El slot que lo reciba se ejecutará en el nuevo hilo. Es decir, que las operaciones síncronas sobre `QProcess` se ejecutarán en ese hilo.
-   5. Al terminar el trabajo el slot emitará una señál con el resultado y este será recibido por la ventana principal.
-
-Ese resultado es la información del hardware que deberá ser mostrada en la pestaña correspondiente. Cualquier forma vale pero con el módulo de JSON —para recorrer el árbol— y [QTreeView](http://doc.qt.io/qt-5/QTreeView.html#details) sería muy sencillo mostrar un árbol de dispositivos.
+Por el momento usaremos estas funciones para la E/S, en lugar de eventos. El problema es que como, como hemos dicho, estas funciones pueden bloquear los hilos donde se ejecutan, por lo que no podemos usarlas nunca en el hilo principal del programa.
 
 ## Opcional
 
