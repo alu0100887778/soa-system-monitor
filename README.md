@@ -33,7 +33,9 @@ En concreto, dentro de `/sys/class/hwmon/` hay un directorio para cada chip dete
 
 Crearemos un hilo que cada segundo —véase el método `sleep()` de `QThread` para implementar la espera—:
 
- 1. Recorra lo directorios de `/sys/class/hwmon/` y los archivos con datos de sensores: `temp*`, `fan*`, etc. [QDir](http://doc.qt.io/qt-5/qdir.html) será de gran ayuda para eso.
+ 1. Recorra lo directorios de `/sys/class/hwmon/` y los archivos con datos de sensores: `temp*`, `fan*`, etc.
+    * [QDir](http://doc.qt.io/qt-5/qdir.html) será de gran ayuda para eso.
+    * En [la documentación del kernel](https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface) se indica qué podemos encontrar en /sys/class/hwmon.
  2. Lea los datos de cada sensor y los almacene en una cola para enviarlos al hilo principal:
     1. Esta cola puede ser `QVector`, `QQueue` o cualquier otra estructura que consideres apropiada.
     2. Cada valor se debe guardar con una etiqueta unica. Esta etiqueta se puede construir, por ejemplo, con el nombre del chip —disponible en el archivo _name_— más el nombre del sensor: _coretemp:temp2\_max_ o _acpitz-temp1\_input_. Se puede usar una estructura propia con el valor y la etiquera o aprovechar las facilidades de [QPair](http://doc.qt.io/qt-5/qpair.html).
@@ -113,4 +115,9 @@ Ese resultado es la información del hardware que deberá ser mostrada en la pes
 
 ## Opcional
 
- * ¿De verdad tienes tiempo para más? ;) Si es así añadie otra información que te interese. Por ejemplo el modelo de la CPU —disponible en `/proc/cpuinfo`— o de la red —ejecutando `netstat` y/o `ifconfig`— como el número de conexiones abiertas o la dirección IP de tu equipo.
+ * ¿De verdad tienes ganas de más? ;) Si es así añade otra información que te interese. Por ejemplo:
+   * El modelo de la CPU —disponible en `/proc/cpuinfo`—.
+   * El número de conexiones abiertas —ejecutando `netstat`— por tipo de protocolo: TCP, UDP, UNIX, etc.
+   * La dirección IP de tu equipo y los MB/s transferidos y recibidos ——con `ifconfig` y/o interpretando `/proc/net/netstat`, `/proc/net/dev/` o `/proc/net/tcp`, por ejemplo—.
+   * Los usuarios con sesiones abiertas en el sistema.
+   * ...
