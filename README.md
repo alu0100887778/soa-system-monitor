@@ -151,7 +151,7 @@ o hacer cosas así:
 
     $ ssh usuario@miservidor.org 'ls /etc/p*'
 
-En Linux necesitamos instalar un cliente como [Putty](http://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html). Como toda buena aplicación de Windows, Putty tiene ventanas. Pero viene con un cliente de línea de comandos llamando `plink`:
+En Windows necesitamos instalar un cliente como [Putty](http://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html). Como toda buena aplicación de Windows, Putty tiene ventanas. Pero viene con un cliente de línea de comandos llamando `plink`:
 
     > plink usuario@miservidor.org "lshw -json"
 
