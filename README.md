@@ -73,6 +73,7 @@ entonces:
  
 ### Notas
  
+ * Los detalles del contenido del directorio /proc están disponibles [aquí](https://www.kernel.org/doc/Documentation/filesystems/proc.txt)
  * Podría ser buena idea usar [QTableWidget](http://doc.qt.io/qt-5/qtablewidget.html) para tener una tabla.
 
 ## Hardware
