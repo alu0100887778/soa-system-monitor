@@ -74,6 +74,8 @@ entonces:
 ### Notas
  
  * Los detalles del contenido del directorio /proc están disponibles [aquí](https://www.kernel.org/doc/Documentation/filesystems/proc.txt)
+ * La clase [QFileInfo](http://doc.qt.io/qt-5/qfileinfo.html) o la llamada al sistema [stat](https://linux.die.net/man/2/stat) nos pueden proporcionar toda la meta-información de un archivo o directorio.
+ * La librería del sistema ofrece [funciones](http://man7.org/linux/man-pages/man3/getpwnam.3.html) para obtener toda la información de una cuenta de usuario a través de su nombre o su UID.
  * Podría ser buena idea usar [QTableWidget](http://doc.qt.io/qt-5/qtablewidget.html) para tener una tabla.
 
 ## Hardware
@@ -92,9 +94,9 @@ Con esa informaación la ventana principal actualizará la pestaña correspondie
 
 ### Notas
 
- * Usar [QTreeView](http://doc.qt.io/qt-5/QTreeView.html#details) parece la forma más sencilla de mostrar el árbol de dispositivos. Pero para eso es necesario interpretar correctamente la salida del comando `lshw`.
+ * Usar [QTreeWidget](http://doc.qt.io/qt-5/QTreeWidget.html#details) parece la forma más sencilla de mostrar el árbol de dispositivos. Pero para eso es necesario interpretar correctamente la salida del comando `lshw`.
 
- * Para poder interpretar la salida de `lshw` sería interesante que dicha salida estuviera en algún formato para el que Qt nos diera facilidades. Lo mejor es pasarle a `lshw` la opción `-json` y así toda la información la devolverá en formato [JSON](https://en.wikipedia.org/wiki/JSON). JSON se ha extendido mucho en el mundo de la web por su relación con Javascript y Qt dispone de [un módulo](http://doc.qt.io/qt-5/json.html) para interpretarlo. Con el módulo JSON será muy fácil recorrer el árbol de dispositivos y construir los elementos del `QTreeView`.
+ * Para poder interpretar la salida de `lshw` sería interesante que dicha salida estuviera en algún formato para el que Qt nos diera facilidades. Lo mejor es pasarle a `lshw` la opción `-json` y así toda la información la devolverá en formato [JSON](https://en.wikipedia.org/wiki/JSON). JSON se ha extendido mucho en el mundo de la web por su relación con Javascript y Qt dispone de [un módulo](http://doc.qt.io/qt-5/json.html) para interpretarlo. Con el módulo JSON será muy fácil recorrer el árbol de dispositivos y construir los elementos del `QTreeWidget`.
 
 #### Ejecución de otros procesos
 
