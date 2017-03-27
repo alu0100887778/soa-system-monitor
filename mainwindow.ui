@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>562</width>
+    <height>620</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
+      <item>
+       <widget class="QTabWidget" name="Tabs">
+        <property name="maximumSize">
+         <size>
+          <width>1139</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <widget class="QWidget" name="sensores">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <attribute name="title">
+          <string>Sensores</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QTextEdit" name="text_sensores"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="procesos">
+         <attribute name="title">
+          <string>procesos</string>
+         </attribute>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QScrollArea" name="scrollArea">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="contenido">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>518</width>
+               <height>488</height>
+              </rect>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QTableWidget" name="tabla_proc">
+                <column>
+                 <property name="text">
+                  <string>PID</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>CMD</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Nombre</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Hilos</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Estado</string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>562</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuSystem_monitor">
+    <property name="title">
+     <string>System monitor</string>
+    </property>
+   </widget>
+   <addaction name="menuSystem_monitor"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
