@@ -27,10 +27,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp\
         mainwindow.cpp \
     hilo_sensores.cpp \
-    info_sensores.cpp
+    info_sensores.cpp \
+    json.cpp \
+    hardware.cpp
 
 HEADERS  += mainwindow.h \
     hilo_sensores.h \
-    info_sensores.h
+    info_sensores.h \
+    json.h \
+    hardware.h
 
 FORMS    += mainwindow.ui

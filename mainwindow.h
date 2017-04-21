@@ -10,6 +10,8 @@
 #include <QTableWidgetItem>
 #include "hilo_sensores.h"
 #include "info_sensores.h"
+#include "json.h"
+#include "hardware.h"
 
 namespace Ui {
 class MainWindow;
@@ -36,6 +38,8 @@ private:
     info_sensores *sensores;
     hilo_sensores *hilo_sens;
     QTimer temp;
+    Hardware hardware_;
+    QThread hilohard;
 
 
 };

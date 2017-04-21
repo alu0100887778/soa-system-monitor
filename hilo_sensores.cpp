@@ -17,7 +17,6 @@ void hilo_sensores::run(void){
             encontrado = false;
             QString directorio_actual("/sys/class/hwmon/" + directory);
 
-           /** if(!(directorio_actual== "/." && actual_dir == "/..")){**/
              if(!(directorio_actual== "/sys/class/hwmon/." && directorio_actual == "/sys/class/hwmon/..")){
                 QDir directorio_aux(directorio_actual);
 

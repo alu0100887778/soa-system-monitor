@@ -18,6 +18,11 @@ MainWindow::MainWindow(QWidget *parent) :
     temp.start(5000);
     //connect(temp,SIGNAL(QTimer::timeout()),this, SLOT(on_Tabs_currentChanged(1)));
 
+    connect(&hardware_,SIGNAL(ejecute(int)),this,SLOT(on_tabWidget_tabBarClicked(int)));
+    hardware_.moveToThread(&hilohard);
+    connect(&hilohard,SIGNAL(started()),&hardware_,SLOT(lshw()));
+    hilohard.start();
+
 }
 
 MainWindow::~MainWindow()
@@ -49,31 +54,38 @@ void MainWindow::on_Tabs_currentChanged(int index)
 
             if(is_numeric(aux_string)){
                 QString actual_dir("/proc/" + dir);
-                QFuture<QVector<QString>> fut = QtConcurrent::run(this, &MainWindow::explorar, actual_dir, dir);
-                QFutureWatcher<QVector<QString>> *watcher = new QFutureWatcher<QVector<QString>>;
-                watcher->setFuture(fut);
+                    QFuture<QVector<QString>> fut = QtConcurrent::run(this, &MainWindow::explorar, actual_dir, dir);
+                     QFutureWatcher<QVector<QString>> *watcher = new QFutureWatcher<QVector<QString>>;
+                        watcher->setFuture(fut);
 
-                   qDebug()<<watcher->isRunning();
-                connect(watcher, &QFutureWatcher<QVector<QString>>::finished, [this,watcher](){
-                    QVector<QString> aux;
-                    qDebug()<<"holi";
-                    aux = watcher->result();
+                            qDebug()<<watcher->isRunning();
+                            connect(watcher, &QFutureWatcher<QVector<QString>>::finished, [this,watcher](){
+                            QVector<QString> aux;
+                            qDebug()<<"holi";
+                            aux = watcher->result();
 
-                    int j = ui->tabla_proc->rowCount();
+                            int j = ui->tabla_proc->rowCount();
 
-                    ui->tabla_proc->setRowCount(ui->tabla_proc->rowCount()+1);
+                            ui->tabla_proc->setRowCount(ui->tabla_proc->rowCount()+1);
 
-                    for(int i = 0; i < 5; i++){
-                        ui->tabla_proc->setItem(j-1,i,new QTableWidgetItem (aux[i]));
-                    }
+                            for(int i = 0; i < 5; i++){
+                                ui->tabla_proc->setItem(j-1,i,new QTableWidgetItem (aux[i]));
+                            }
 
-                    watcher->deleteLater();
+                            watcher->deleteLater();
                 });
             }
         }
     break;
-    case 2:
-    qDebug()<<"hufeweewewli";
+    case 2:{
+
+        QByteArray aux = hardware_.transferenciadatos();
+        QJsonModel * modelo = new QJsonModel;
+
+        ui->treeView->setColumnWidth(0,100);
+        ui->treeView->setModel(modelo);
+        modelo->loadJson(aux);
+}
     break;
 
     default:
